@@ -13,12 +13,29 @@
         <!-- NOTE: EditTextPreference's summary should be set to its value by the activity code. -->
         <EditTextPreference
             android:capitalize="words"
-            android:inputType="textCapWords"
-            android:key="example_text"
+            android:inputType="textUri"
+            android:key="server_url"
             android:maxLines="1"
             android:selectAllOnFocus="true"
             android:singleLine="true"
             android:title="Server URL" />
+
+        <EditTextPreference
+            android:capitalize="words"
+            android:inputType="text"
+            android:key="username"
+            android:maxLines="1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="Username" />
+
+        <EditTextPreference
+            android:inputType="textPassword"
+            android:key="password"
+            android:maxLines="1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="Password" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="Google Fit">
