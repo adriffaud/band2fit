@@ -1,0 +1,35 @@
+<androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory app:title="@string/general">
+        <EditTextPreference
+            app:key="gadget_path"
+            app:title="@string/export_path" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/influx">
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="sync_influx"
+            app:title="@string/sync" />
+
+        <EditTextPreference
+            app:key="server_url"
+            app:title="@string/server_url" />
+
+        <EditTextPreference
+            app:key="username"
+            app:title="@string/username" />
+
+        <EditTextPreference
+            app:key="password"
+            app:title="@string/password" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/fit">
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:key="sync_fit"
+            app:title="@string/fit_sync" />
+    </PreferenceCategory>
+
+
+</androidx.preference.PreferenceScreen>
