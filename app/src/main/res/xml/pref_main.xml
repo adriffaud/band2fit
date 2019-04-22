@@ -1,6 +1,8 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory android:title="@string/general">
-        <EditTextPreference android:title="@string/export_path" />
+        <EditTextPreference
+            android:key="gadget_path"
+            android:title="@string/export_path" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/influx">
