@@ -1,15 +1,14 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory android:title="General">
-        <EditTextPreference android:title="Gadgetbridge export path" />
+    <PreferenceCategory android:title="@string/general">
+        <EditTextPreference android:title="@string/export_path" />
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="InfluxDB synchronization">
+    <PreferenceCategory android:title="@string/influx">
         <SwitchPreference
             android:defaultValue="true"
             android:key="sync_influx"
-            android:title="Sync " />
+            android:title="@string/sync" />
 
-        <!-- NOTE: EditTextPreference accepts EditText attributes. -->
         <!-- NOTE: EditTextPreference's summary should be set to its value by the activity code. -->
         <EditTextPreference
             android:capitalize="words"
@@ -18,7 +17,7 @@
             android:maxLines="1"
             android:selectAllOnFocus="true"
             android:singleLine="true"
-            android:title="Server URL" />
+            android:title="@string/server_url" />
 
         <EditTextPreference
             android:capitalize="words"
@@ -27,7 +26,7 @@
             android:maxLines="1"
             android:selectAllOnFocus="true"
             android:singleLine="true"
-            android:title="Username" />
+            android:title="@string/username" />
 
         <EditTextPreference
             android:inputType="textPassword"
@@ -35,14 +34,14 @@
             android:maxLines="1"
             android:selectAllOnFocus="true"
             android:singleLine="true"
-            android:title="Password" />
+            android:title="@string/password" />
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="Google Fit">
+    <PreferenceCategory android:title="@string/fit">
         <SwitchPreference
             android:defaultValue="false"
             android:key="sync_fit"
-            android:title="Sync to Google Fit" />
+            android:title="@string/fit_sync" />
     </PreferenceCategory>
 
 

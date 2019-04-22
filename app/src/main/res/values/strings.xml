@@ -1,3 +1,16 @@
 <resources>
     <string name="app_name">MiBand Exporter</string>
+
+    <!-- Headers -->
+    <string name="general">General</string>
+    <string name="influx">InfluxDB synchronization</string>
+    <string name="fit">Google Fit</string>
+
+    <!-- Fields -->
+    <string name="export_path">Gadgetbridge export path</string>
+    <string name="sync">Sync</string>
+    <string name="server_url">Server URL</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="fit_sync">Sync to Google Fit</string>
 </resources>
