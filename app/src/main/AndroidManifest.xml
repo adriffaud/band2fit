@@ -3,6 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="fr.driffaud.band2fit">
 
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"

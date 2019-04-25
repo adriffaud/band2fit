@@ -2,7 +2,6 @@
     <PreferenceCategory app:title="@string/general">
         <Preference
             app:key="gadget_path"
-            app:summary="Select the Gadgetbridge exported file path"
             app:title="@string/export_path" />
     </PreferenceCategory>
 
