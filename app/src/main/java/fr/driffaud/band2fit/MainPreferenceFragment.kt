@@ -55,19 +55,19 @@ class PreferenceFragment : PreferenceFragmentCompat() {
         gadgetPathBtn?.summaryProvider = pathSummaryProvider
 
         val urlEditText = findPreference<EditTextPreference>("server_url")
-        urlEditText?.onBindEditTextListener = EditTextPreference.OnBindEditTextListener { editText ->
-            editText.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
+        urlEditText?.onBindEditTextListener = EditTextPreference.OnBindEditTextListener {
+            it.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
         }
 
         val userEditText = findPreference<EditTextPreference>("username")
-        userEditText?.onBindEditTextListener = EditTextPreference.OnBindEditTextListener { editText ->
-            editText.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+        userEditText?.onBindEditTextListener = EditTextPreference.OnBindEditTextListener {
+            it.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
         }
 
         val passEditText = findPreference<EditTextPreference>("password")
-        passEditText?.onBindEditTextListener = EditTextPreference.OnBindEditTextListener { editText ->
-            editText.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-            editText.transformationMethod = PasswordTransformationMethod.getInstance()
+        passEditText?.onBindEditTextListener = EditTextPreference.OnBindEditTextListener {
+            it.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            it.transformationMethod = PasswordTransformationMethod.getInstance()
         }
 
         val lastSyncTime = "09:14"
