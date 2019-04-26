@@ -9,8 +9,6 @@ import androidx.work.WorkerParameters
 import com.google.gson.Gson
 import okhttp3.*
 
-private val JSON = MediaType.get("application/json; charset=utf-8")
-
 class UploadWorker(appContext: Context, workerParams: WorkerParameters) : Worker(appContext, workerParams) {
 
     private val sharedPrefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(applicationContext)
@@ -36,7 +34,10 @@ class UploadWorker(appContext: Context, workerParams: WorkerParameters) : Worker
 
         // Send to server
         try {
-            sendToInflux(datapoints)
+            val res = sendToInflux(datapoints)
+            if (!res?.isSuccessful!!) {
+                return Result.failure()
+            }
         } catch (e: Exception) {
             Log.e(TAG, e.message, e)
             return Result.failure()
@@ -46,30 +47,26 @@ class UploadWorker(appContext: Context, workerParams: WorkerParameters) : Worker
         return Result.success()
     }
 
-    private fun sendToInflux(datapoints: List<Datapoint>) {
-        try {
-            val gson = Gson()
-            val client = OkHttpClient()
-            val body = RequestBody.create(JSON, gson.toJson(datapoints))
+    private fun sendToInflux(datapoints: List<Datapoint>): Response? {
+        val gson = Gson()
+        val client = OkHttpClient()
+        val body = RequestBody.create(MediaType.get("application/json; charset=utf-8"), gson.toJson(datapoints))
 
-            val url = sharedPrefs.getString("server_url", "")
-            val username = sharedPrefs.getString("username", "")
-            val password = sharedPrefs.getString("password", "")
+        val url = sharedPrefs.getString("server_url", "")
+        val username = sharedPrefs.getString("username", "")
+        val password = sharedPrefs.getString("password", "")
 
-            if (url!!.isEmpty() || username!!.isEmpty() || password!!.isEmpty()) {
-                return
-            }
-
-            val credentials = Credentials.basic(username, password)
-            val request = Request.Builder()
-                .header("Authorization", credentials)
-                .url(url)
-                .post(body)
-                .build()
-
-            val response = client.newCall(request).execute()
-        } catch (e: Exception) {
-            Log.e(TAG, e.message, e)
+        if (url!!.isEmpty() || username!!.isEmpty() || password!!.isEmpty()) {
+            return null
         }
+
+        val credentials = Credentials.basic(username, password)
+        val request = Request.Builder()
+            .header("Authorization", credentials)
+            .url(url)
+            .post(body)
+            .build()
+
+        return client.newCall(request).execute()
     }
 }
