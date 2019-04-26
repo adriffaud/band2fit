@@ -45,13 +45,14 @@ class PreferenceFragment : PreferenceFragmentCompat() {
 
         val sharedPrefs = preferenceManager.sharedPreferences
         sharedPrefs.registerOnSharedPreferenceChangeListener { sharedPreferences, _ ->
+            val exportFilePath = sharedPreferences.getString("gadget_path", "")
             val doSync = sharedPreferences.getBoolean("sync_influx", false)
             val serverUrl = sharedPreferences.getString("server_url", "")
             val username = sharedPreferences.getString("username", "")
             val password = sharedPreferences.getString("password", "")
 
-            Log.i(TAG, "doSync: $doSync, serverUrl: $serverUrl, username: $username")
-            if (doSync && serverUrl!!.isNotEmpty() && username!!.isNotEmpty() && password!!.isNotEmpty()) {
+            Log.i(TAG, "exportFile: $exportFilePath, doSync: $doSync, serverUrl: $serverUrl, username: $username")
+            if (doSync && exportFilePath!!.isNotEmpty() && serverUrl!!.isNotEmpty() && username!!.isNotEmpty() && password!!.isNotEmpty()) {
                 Log.i(TAG, "Register work")
                 val uploadWorkRequest = PeriodicWorkRequestBuilder<UploadWorker>(SYNC_FREQUENCY, TimeUnit.HOURS).build()
                 WorkManager.getInstance().enqueue(uploadWorkRequest)
@@ -101,7 +102,6 @@ class PreferenceFragment : PreferenceFragmentCompat() {
             }
         }
         findPreference<SwitchPreferenceCompat>("sync_influx")?.summaryProvider = syncSummaryProvider
-
 
     }
 }
