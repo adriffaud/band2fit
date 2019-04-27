@@ -8,8 +8,10 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.google.gson.Gson
 import okhttp3.*
+import java.text.DateFormat
+import java.util.*
 
-class UploadWorker(appContext: Context, workerParams: WorkerParameters) : Worker(appContext, workerParams) {
+class UploadWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
 
     private val sharedPrefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(applicationContext)
 
@@ -29,22 +31,47 @@ class UploadWorker(appContext: Context, workerParams: WorkerParameters) : Worker
             return Result.failure()
         }
 
-        val datapoints = GadgetDbOpenHelper(applicationContext, exportFile).getDatapoints()
-        Log.i(TAG, "Datapoints: ${datapoints.size}")
-
-        // Send to server
+        var database: GadgetDbOpenHelper? = null
         try {
-            val res = sendToInflux(datapoints)
-            if (!res?.isSuccessful!!) {
-                return Result.failure()
+            database = GadgetDbOpenHelper(applicationContext, exportFile)
+            val datapoints = database.getDatapoints()
+
+            val lastTs = sharedPrefs.getLong("lastTs", 0)
+            val toSend = datapoints.filter { it.timestamp > lastTs }
+            Log.i(TAG, "Sending ${toSend.size} datapoints from ${datapoints.size} (last stored ts: $lastTs)")
+
+            if (toSend.isEmpty()) {
+                setLastSync()
+                return Result.success()
+            }
+
+            val res = sendToInflux(toSend)
+            return if (res?.isSuccessful!!) {
+                setLastSync()
+                sharedPrefs.edit()
+                    .putLong("lastTs", toSend.last().timestamp)
+                    .apply()
+                Result.success()
+            } else {
+                Log.i(TAG, "Server response unsuccessful: ${res.code()}")
+                Result.failure()
             }
         } catch (e: Exception) {
             Log.e(TAG, e.message, e)
             return Result.failure()
+        } finally {
+            database?.close()
         }
+    }
 
-        // Indicate whether the task finished successfully with the Result
-        return Result.success()
+    private fun setLastSync() {
+        val df = DateFormat.getTimeInstance(DateFormat.SHORT)
+        val lastSync = df.format(Date())
+
+        Log.i(TAG, "Last sync: $lastSync")
+        sharedPrefs.edit()
+            .putString("lastSync", lastSync)
+            .apply()
     }
 
     private fun sendToInflux(datapoints: List<Datapoint>): Response? {
