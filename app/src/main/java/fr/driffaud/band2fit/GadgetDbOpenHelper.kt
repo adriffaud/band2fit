@@ -4,7 +4,6 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.net.Uri
-import android.util.Log
 import java.io.File
 import java.io.FileOutputStream
 
@@ -22,13 +21,13 @@ class GadgetDbOpenHelper(context: Context, dbName: String) : SQLiteOpenHelper(co
     init {
         val destDb = File(dir, databaseName)
 
-        Log.i(TAG, "Trying to copy database to $destDb")
+        LOG.info("Trying to copy database to $destDb")
         context.contentResolver.openInputStream(Uri.parse(dbName))?.use { it.copyTo(FileOutputStream(destDb), 4096) }
 
         if (!destDb.exists()) {
             throw Exception("Couldn't copy database file to ${destDb.absolutePath}")
         }
-        Log.i(TAG, "Successfully copied database")
+        LOG.info("Successfully copied database")
 
         database = SQLiteDatabase.openDatabase(destDb.absolutePath, null, SQLiteDatabase.OPEN_READWRITE)
     }
@@ -40,7 +39,7 @@ class GadgetDbOpenHelper(context: Context, dbName: String) : SQLiteOpenHelper(co
 
         val datapoints: MutableList<Datapoint> = mutableListOf()
         database?.rawQuery(MIBAND_DATAPOINTS, null).use { cursor ->
-            Log.i(TAG, "${cursor?.count} rows to read")
+            LOG.info("${cursor?.count} rows to read")
 
             if (cursor!!.moveToFirst()) {
                 while (!cursor.isAfterLast) {
@@ -64,11 +63,9 @@ class GadgetDbOpenHelper(context: Context, dbName: String) : SQLiteOpenHelper(co
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
-        Log.i(TAG, "onCreate")
     }
 
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
-        Log.i(TAG, "onUpgrade")
     }
 
 }

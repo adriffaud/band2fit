@@ -2,7 +2,6 @@ package fr.driffaud.band2fit
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.PreferenceManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
@@ -16,18 +15,18 @@ class UploadWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params)
     private val sharedPrefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(applicationContext)
 
     override fun doWork(): Result {
-        Log.i(TAG, "doWork")
+        LOG.info("doWork")
 
         val doSync = sharedPrefs.getBoolean("sync_influx", false)
 
         if (!doSync) {
-            Log.i(TAG, "Sync is disabled")
+            LOG.info("Sync is disabled")
             return Result.success()
         }
 
         val exportFile = sharedPrefs.getString("gadget_path", "")
         if (exportFile!!.isEmpty()) {
-            Log.i(TAG, "Invalid export file")
+            LOG.info("Invalid export file")
             return Result.failure()
         }
 
@@ -38,7 +37,7 @@ class UploadWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params)
 
             val lastTs = sharedPrefs.getLong("lastTs", 0)
             val toSend = datapoints.filter { it.timestamp > lastTs }
-            Log.i(TAG, "Sending ${toSend.size} datapoints from ${datapoints.size} (last stored ts: $lastTs)")
+            LOG.info("Sending ${toSend.size} datapoints from ${datapoints.size} (last stored ts: $lastTs)")
 
             if (toSend.isEmpty()) {
                 setLastSync()
@@ -53,11 +52,11 @@ class UploadWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params)
                     .apply()
                 Result.success()
             } else {
-                Log.i(TAG, "Server response unsuccessful: ${res.code()}")
+                LOG.info("Server response unsuccessful: ${res.code()}")
                 Result.failure()
             }
         } catch (e: Exception) {
-            Log.e(TAG, e.message, e)
+            LOG.error(e.message, e)
             return Result.failure()
         } finally {
             database?.close()
@@ -68,7 +67,7 @@ class UploadWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params)
         val df = DateFormat.getTimeInstance(DateFormat.SHORT)
         val lastSync = df.format(Date())
 
-        Log.i(TAG, "Last sync: $lastSync")
+        LOG.info("Last sync: $lastSync")
         sharedPrefs.edit()
             .putString("lastSync", lastSync)
             .apply()

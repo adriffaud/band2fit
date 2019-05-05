@@ -5,18 +5,19 @@ import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
 import android.text.method.PasswordTransformationMethod
-import android.util.Log
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.util.concurrent.TimeUnit
 
 private const val READ_REQUEST_CODE: Int = 42
-private const val SYNC_FREQUENCY: Long = 1
-const val TAG: String = "MiBandExporter"
+val LOG: Logger = LoggerFactory.getLogger(UploadWorker::class.java)
 
 class PreferenceFragment : PreferenceFragmentCompat() {
 
@@ -51,13 +52,13 @@ class PreferenceFragment : PreferenceFragmentCompat() {
             val username = sharedPreferences.getString("username", "")
             val password = sharedPreferences.getString("password", "")
 
-            Log.i(TAG, "exportFile: $exportFilePath, doSync: $doSync, serverUrl: $serverUrl, username: $username")
             if (doSync && exportFilePath!!.isNotEmpty() && serverUrl!!.isNotEmpty() && username!!.isNotEmpty() && password!!.isNotEmpty()) {
-                Log.i(TAG, "Register work")
-                val uploadWorkRequest = PeriodicWorkRequestBuilder<UploadWorker>(SYNC_FREQUENCY, TimeUnit.HOURS).build()
-                WorkManager.getInstance().enqueue(uploadWorkRequest)
+                LOG.info("Register work")
+                val uploadWorkRequest = PeriodicWorkRequestBuilder<UploadWorker>(45, TimeUnit.MINUTES).build()
+                WorkManager.getInstance()
+                    .enqueueUniquePeriodicWork("MIBAND_SYNC", ExistingPeriodicWorkPolicy.KEEP, uploadWorkRequest)
             } else {
-                Log.i(TAG, "Cancel work")
+                LOG.info("Cancelling all work")
                 WorkManager.getInstance().cancelAllWork()
             }
         }
@@ -93,15 +94,16 @@ class PreferenceFragment : PreferenceFragmentCompat() {
             it.transformationMethod = PasswordTransformationMethod.getInstance()
         }
 
-        val lastSyncTime = "09:14"
+        val lastSyncTime = sharedPrefs.getString("lastSync", "")
         val syncSummaryProvider = Preference.SummaryProvider<SwitchPreferenceCompat> {
-            if (it.isChecked) {
+            if (it.isChecked && lastSyncTime!!.isNotEmpty()) {
                 "Last synced at $lastSyncTime"
+            } else if (it.isChecked && lastSyncTime!!.isEmpty()) {
+                "Not synced yet"
             } else {
                 "Syncing is currently disabled"
             }
         }
         findPreference<SwitchPreferenceCompat>("sync_influx")?.summaryProvider = syncSummaryProvider
-
     }
 }
