@@ -1,10 +1,15 @@
 package fr.driffaud.band2fit
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.text.InputType
 import android.text.method.PasswordTransformationMethod
+import android.util.Log
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -105,5 +110,17 @@ class PreferenceFragment : PreferenceFragmentCompat() {
             }
         }
         findPreference<SwitchPreferenceCompat>("sync_influx")?.summaryProvider = syncSummaryProvider
+
+        checkAndRequestPermissions()
+    }
+
+    private fun checkAndRequestPermissions() {
+        if (ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission_group.STORAGE
+            ) == PackageManager.PERMISSION_DENIED
+        ) {
+            ActivityCompat.requestPermissions(requireActivity(), arrayOf(Manifest.permission_group.STORAGE), 0)
+        }
     }
 }
