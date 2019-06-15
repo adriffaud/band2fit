@@ -7,6 +7,7 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.google.gson.Gson
 import okhttp3.*
+import timber.log.Timber
 import java.text.DateFormat
 import java.util.*
 
@@ -15,18 +16,18 @@ class UploadWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params)
     private val sharedPrefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(applicationContext)
 
     override fun doWork(): Result {
-        LOG.info("doWork")
+        Timber.i("doWork")
 
         val doSync = sharedPrefs.getBoolean("sync_influx", false)
 
         if (!doSync) {
-            LOG.info("Sync is disabled")
+            Timber.i("Sync is disabled")
             return Result.success()
         }
 
         val exportFile = sharedPrefs.getString("gadget_path", "")
         if (exportFile!!.isEmpty()) {
-            LOG.info("Invalid export file")
+            Timber.i("Invalid export file")
             return Result.failure()
         }
 
@@ -37,7 +38,7 @@ class UploadWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params)
 
             val lastTs = sharedPrefs.getLong("lastTs", 0)
             val toSend = datapoints.filter { it.timestamp > lastTs }
-            LOG.info("Sending ${toSend.size} datapoints from ${datapoints.size} (last stored ts: $lastTs)")
+            Timber.i("Sending ${toSend.size} datapoints from ${datapoints.size} (last stored ts: $lastTs)")
 
             if (toSend.isEmpty()) {
                 setLastSync()
@@ -52,11 +53,11 @@ class UploadWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params)
                     .apply()
                 Result.success()
             } else {
-                LOG.info("Server response unsuccessful: ${res.code()}")
+                Timber.i("Server response unsuccessful: ${res.code()}")
                 Result.failure()
             }
         } catch (e: Exception) {
-            LOG.error(e.message, e)
+            Timber.e(e)
             return Result.failure()
         } finally {
             database?.close()
@@ -67,7 +68,7 @@ class UploadWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params)
         val df = DateFormat.getTimeInstance(DateFormat.SHORT)
         val lastSync = df.format(Date())
 
-        LOG.info("Last sync: $lastSync")
+        Timber.i("Last sync: $lastSync")
         sharedPrefs.edit()
             .putString("lastSync", lastSync)
             .apply()

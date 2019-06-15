@@ -30,14 +30,5 @@
             app:title="@string/password" />
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="@string/fit">
-        <SwitchPreferenceCompat
-            app:defaultValue="false"
-            app:key="sync_fit"
-            app:summary="Sync to Google Fit"
-            app:enabled="false"
-            app:title="@string/fit_sync" />
-    </PreferenceCategory>
-
 
 </androidx.preference.PreferenceScreen>

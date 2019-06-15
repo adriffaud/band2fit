@@ -2,6 +2,7 @@ package fr.driffaud.band2fit
 
 import android.app.Activity
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.text.InputType
 import android.text.method.PasswordTransformationMethod
@@ -12,12 +13,10 @@ import androidx.preference.SwitchPreferenceCompat
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
 private const val READ_REQUEST_CODE: Int = 42
-val LOG: Logger = LoggerFactory.getLogger(UploadWorker::class.java)
 
 class PreferenceFragment : PreferenceFragmentCompat() {
 
@@ -45,7 +44,8 @@ class PreferenceFragment : PreferenceFragmentCompat() {
         setPreferencesFromResource(R.xml.preferences, rootKey)
 
         val sharedPrefs = preferenceManager.sharedPreferences
-        sharedPrefs.registerOnSharedPreferenceChangeListener { sharedPreferences, _ ->
+        sharedPrefs.registerOnSharedPreferenceChangeListener { sharedPreferences, key ->
+            Timber.d("Shared pref change: $key")
             val exportFilePath = sharedPreferences.getString("gadget_path", "")
             val doSync = sharedPreferences.getBoolean("sync_influx", false)
             val serverUrl = sharedPreferences.getString("server_url", "")
@@ -53,14 +53,16 @@ class PreferenceFragment : PreferenceFragmentCompat() {
             val password = sharedPreferences.getString("password", "")
 
             if (doSync && exportFilePath!!.isNotEmpty() && serverUrl!!.isNotEmpty() && username!!.isNotEmpty() && password!!.isNotEmpty()) {
-                LOG.info("Register work")
+                Timber.i("Register work")
                 val uploadWorkRequest = PeriodicWorkRequestBuilder<UploadWorker>(45, TimeUnit.MINUTES).build()
                 WorkManager.getInstance()
                     .enqueueUniquePeriodicWork("MIBAND_SYNC", ExistingPeriodicWorkPolicy.KEEP, uploadWorkRequest)
             } else {
-                LOG.info("Cancelling all work")
+                Timber.i("Cancelling all work")
                 WorkManager.getInstance().cancelAllWork()
             }
+
+            updateSyncTime(sharedPreferences)
         }
 
         val pathSummaryProvider = Preference.SummaryProvider<Preference> {
@@ -79,31 +81,35 @@ class PreferenceFragment : PreferenceFragmentCompat() {
         gadgetPathBtn?.summaryProvider = pathSummaryProvider
 
         val urlEditText = findPreference<EditTextPreference>("server_url")
-        urlEditText?.onBindEditTextListener = EditTextPreference.OnBindEditTextListener {
+        urlEditText?.setOnBindEditTextListener {
             it.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
         }
 
         val userEditText = findPreference<EditTextPreference>("username")
-        userEditText?.onBindEditTextListener = EditTextPreference.OnBindEditTextListener {
+        userEditText?.setOnBindEditTextListener {
             it.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
         }
 
         val passEditText = findPreference<EditTextPreference>("password")
-        passEditText?.onBindEditTextListener = EditTextPreference.OnBindEditTextListener {
+        passEditText?.setOnBindEditTextListener {
             it.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
             it.transformationMethod = PasswordTransformationMethod.getInstance()
         }
 
-        val lastSyncTime = sharedPrefs.getString("lastSync", "")
-        val syncSummaryProvider = Preference.SummaryProvider<SwitchPreferenceCompat> {
-            if (it.isChecked && lastSyncTime!!.isNotEmpty()) {
-                "Last synced at $lastSyncTime"
-            } else if (it.isChecked && lastSyncTime!!.isEmpty()) {
-                "Not synced yet"
-            } else {
-                "Syncing is currently disabled"
-            }
+        updateSyncTime(sharedPrefs)
+    }
+
+    private fun updateSyncTime(sharedPreferences: SharedPreferences) {
+        val doSync = sharedPreferences.getBoolean("sync_influx", false)
+        val lastSyncTime = sharedPreferences.getString("lastSync", "")
+        val syncPref = findPreference<SwitchPreferenceCompat>("sync_influx")
+
+        if (doSync && lastSyncTime!!.isNotEmpty()) {
+            syncPref?.summary = "Last synced at $lastSyncTime"
+        } else if (doSync && lastSyncTime!!.isEmpty()) {
+            syncPref?.summary = "Not synced yet"
+        } else {
+            syncPref?.summary = "Syncing disabled"
         }
-        findPreference<SwitchPreferenceCompat>("sync_influx")?.summaryProvider = syncSummaryProvider
     }
 }

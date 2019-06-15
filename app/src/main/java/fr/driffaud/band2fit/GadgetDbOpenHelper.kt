@@ -4,6 +4,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.net.Uri
+import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
 
@@ -21,13 +22,13 @@ class GadgetDbOpenHelper(context: Context, dbName: String) : SQLiteOpenHelper(co
     init {
         val destDb = File(dir, databaseName)
 
-        LOG.info("Trying to copy database to $destDb")
+        Timber.i("Trying to copy database to $destDb")
         context.contentResolver.openInputStream(Uri.parse(dbName))?.use { it.copyTo(FileOutputStream(destDb), 4096) }
 
         if (!destDb.exists()) {
             throw Exception("Couldn't copy database file to ${destDb.absolutePath}")
         }
-        LOG.info("Successfully copied database")
+        Timber.i("Successfully copied database")
 
         database = SQLiteDatabase.openDatabase(destDb.absolutePath, null, SQLiteDatabase.OPEN_READWRITE)
     }
@@ -39,7 +40,7 @@ class GadgetDbOpenHelper(context: Context, dbName: String) : SQLiteOpenHelper(co
 
         val datapoints: MutableList<Datapoint> = mutableListOf()
         database?.rawQuery(MIBAND_DATAPOINTS, null).use { cursor ->
-            LOG.info("${cursor?.count} rows to read")
+            Timber.i("${cursor?.count} rows to read")
 
             if (cursor!!.moveToFirst()) {
                 while (!cursor.isAfterLast) {
