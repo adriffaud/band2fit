@@ -27,6 +27,7 @@ class PreferenceFragment : PreferenceFragmentCompat() {
     private fun performFileSearch() {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
+            addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION and Intent.FLAG_GRANT_READ_URI_PERMISSION)
             type = "*/*"
         }
 
@@ -36,6 +37,11 @@ class PreferenceFragment : PreferenceFragmentCompat() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
         if (requestCode == READ_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
             resultData?.data?.also { uri ->
+                // Ensure we keep file access permission across phone restarts
+                val takeFlags =
+                    resultData.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                activity?.contentResolver?.takePersistableUriPermission(uri, takeFlags)
+
                 with(preferenceManager.sharedPreferences.edit()) {
                     putString("gadget_path", uri.toString())
                     apply()
@@ -104,6 +110,7 @@ class PreferenceFragment : PreferenceFragmentCompat() {
     }
 
     private fun updateSyncTime(sharedPreferences: SharedPreferences) {
+        Timber.d("Update sync time")
         val doSync = sharedPreferences.getBoolean("sync_influx", false)
         val lastSyncTime = sharedPreferences.getString("lastSync", "")
         val syncPref = findPreference<SwitchPreferenceCompat>("sync_influx")
