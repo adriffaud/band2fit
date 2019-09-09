@@ -3,6 +3,7 @@ package fr.driffaud.band2fit
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.google.gson.Gson
@@ -33,12 +34,16 @@ class UploadWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params)
 
         var database: GadgetDbOpenHelper? = null
         try {
+            var remaining = false
             database = GadgetDbOpenHelper(applicationContext, exportFile)
             val datapoints = database.getDatapoints()
 
             val lastTs = sharedPrefs.getLong("lastTs", 0)
-            val toSend = datapoints.filter { it.timestamp > lastTs }
-            Timber.i("Sending ${toSend.size} datapoints from ${datapoints.size} (last stored ts: $lastTs)")
+            val filtered = datapoints.filter { it.timestamp > lastTs }
+            val toSend = filtered.take(80000)
+            Timber.i("Sending ${toSend.size} datapoints from ${filtered.size} (last stored ts: $lastTs)")
+            remaining = filtered.size - toSend.size > 0
+            Timber.i("${filtered.size - toSend.size} datapoints remaining")
 
             if (toSend.isEmpty()) {
                 setLastSync()
@@ -51,6 +56,9 @@ class UploadWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params)
                 sharedPrefs.edit()
                     .putLong("lastTs", toSend.last().timestamp)
                     .apply()
+
+                if (remaining) this.doWork()
+
                 Result.success()
             } else {
                 Timber.i("Server response unsuccessful: ${res.code()}")
