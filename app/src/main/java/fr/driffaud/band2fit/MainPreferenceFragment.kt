@@ -65,11 +65,11 @@ class PreferenceFragment : PreferenceFragmentCompat() {
             if (doSync && exportFilePath!!.isNotEmpty() && serverUrl!!.isNotEmpty() && username!!.isNotEmpty() && password!!.isNotEmpty()) {
                 Timber.i("Register work")
                 val uploadWorkRequest = PeriodicWorkRequestBuilder<UploadWorker>(45, TimeUnit.MINUTES).build()
-                WorkManager.getInstance()
+                WorkManager.getInstance(context!!)
                     .enqueueUniquePeriodicWork("MIBAND_SYNC", ExistingPeriodicWorkPolicy.KEEP, uploadWorkRequest)
             } else {
                 Timber.i("Cancelling all work")
-                WorkManager.getInstance().cancelAllWork()
+                WorkManager.getInstance(context!!).cancelAllWork()
             }
 
             updateSyncTime(sharedPreferences)

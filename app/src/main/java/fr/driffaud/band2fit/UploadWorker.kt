@@ -3,14 +3,19 @@ package fr.driffaud.band2fit
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
-import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.google.gson.Gson
-import okhttp3.*
+import okhttp3.Credentials
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
 import timber.log.Timber
 import java.text.DateFormat
 import java.util.*
+
 
 class UploadWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
 
@@ -34,7 +39,6 @@ class UploadWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params)
 
         var database: GadgetDbOpenHelper? = null
         try {
-            var remaining = false
             database = GadgetDbOpenHelper(applicationContext, exportFile)
             val datapoints = database.getDatapoints()
 
@@ -42,7 +46,8 @@ class UploadWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params)
             val filtered = datapoints.filter { it.timestamp > lastTs }
             val toSend = filtered.take(80000)
             Timber.i("Sending ${toSend.size} datapoints from ${filtered.size} (last stored ts: $lastTs)")
-            remaining = filtered.size - toSend.size > 0
+
+            val remaining = filtered.size - toSend.size > 0
             Timber.i("${filtered.size - toSend.size} datapoints remaining")
 
             if (toSend.isEmpty()) {
@@ -61,7 +66,7 @@ class UploadWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params)
 
                 Result.success()
             } else {
-                Timber.i("Server response unsuccessful: ${res.code()}")
+                Timber.i("Server response unsuccessful: ${res.code}")
                 Result.failure()
             }
         } catch (e: Exception) {
@@ -85,7 +90,8 @@ class UploadWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params)
     private fun sendToInflux(datapoints: List<Datapoint>): Response? {
         val gson = Gson()
         val client = OkHttpClient()
-        val body = RequestBody.create(MediaType.get("application/json; charset=utf-8"), gson.toJson(datapoints))
+        val mediaType = "application/json; charset=utf-8".toMediaType()
+        val body = gson.toJson(datapoints).toRequestBody(mediaType)
 
         val url = sharedPrefs.getString("server_url", "")
         val username = sharedPrefs.getString("username", "")
